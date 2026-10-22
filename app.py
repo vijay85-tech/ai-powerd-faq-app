@@ -34,14 +34,14 @@ if "chat_history" not in st.session_state:
 def ask_openai(question: str, df: pd.DataFrame):
     columns = ", ".join(df.columns.tolist())
     data_sample = df.head(100).to_csv(index=False)
-    prompt = f"""You are a CSV analysis assistant. Available columns: {columns} 
+    prompt = f"""You are a spreadsheet analysis assistant. Available columns: {columns}
 Important Rules:
 - Use the exact column names.
 - Never say a column does not exist if it is listed above.
 - Answer only from provided data.
 - If unavailable, clearly state it.
 
-CSV Sample:
+Data Sample:
 {data_sample}
 
 Question:
@@ -53,7 +53,7 @@ Question:
         messages=[
             {
                 "role": "system",
-                "content": "You are an expert CSV analyst."
+                "content": "You are an expert spreadsheet analyst."
             },
             {
                 "role": "user",
@@ -71,12 +71,12 @@ Question:
 # --------------------------------------------------
 
 st.set_page_config(
-    page_title="CSV FAQ App",
+    page_title="Spreadsheet FAQ App",
     layout="wide"
 )
-st.title("CSV: Frequently Asked Questions")
+st.title("Spreadsheet: Frequently Asked Questions")
 st.caption(
-    "Upload and retrieve data from your CSV files using AI-powered Frequently Asked Questions (FAQ)."
+    "Upload CSV or Excel files and ask questions about their data."
 )
 
 # --------------------------------------------------
@@ -84,22 +84,29 @@ st.caption(
 # --------------------------------------------------
 
 uploaded_files = st.file_uploader(
-    "Upload CSV files",
-    type=["csv"],
+    "Upload CSV or Excel files",
+    type=["csv", "xlsx", "xls"],
     accept_multiple_files=True
 )
 
-csv_dict = {}
+dataframes = {}
 if uploaded_files:
     for file in uploaded_files:
         try:
-            df = pd.read_csv(file)
+            if file.name.lower().endswith(".csv"):
+                df = pd.read_csv(file)
+            else:
+                df = pd.read_excel(file)
+            blank_rows = df.astype("string").apply(
+                lambda column: column.str.strip().eq("").fillna(True)
+            ).all(axis=1)
+            df = df.loc[~blank_rows]
             df.columns = (
                 df.columns
                 .str.strip()
                 .str.replace("\n", " ", regex=False)
             )
-            csv_dict[file.name] = df
+            dataframes[file.name] = df
         except Exception as e:
             st.error(f"Error loading {file.name}: {e}")
 
@@ -107,14 +114,14 @@ if uploaded_files:
 # Sidebar
 # --------------------------------------------------
 
-if csv_dict:
-    st.sidebar.subheader("Select CSV")
+if dataframes:
+    st.sidebar.subheader("Select file")
     selected_file = st.sidebar.selectbox(
         "",
-        list(csv_dict.keys())
+        list(dataframes.keys())
     )
 
-    df = csv_dict[selected_file]
+    df = dataframes[selected_file]
     st.write(f"### Showing: {selected_file.upper()}")
     with st.expander("Columns"):
         st.write(df.columns.tolist())
@@ -142,7 +149,7 @@ if csv_dict:
     # --------------------------------------------------
 
     question = st.chat_input(
-        "Ask a question about CSV data..."
+        "Ask a question about spreadsheet data..."
     )
 
     if question:
