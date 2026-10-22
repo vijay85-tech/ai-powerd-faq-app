@@ -1,15 +1,16 @@
-# CSV FAQ App
+# CSV & Excel FAQ App
 
-An AI-powered Streamlit application that allows users to upload CSV files and ask natural language questions about their data.
+An AI-powered Streamlit application that allows users to upload CSV or Excel files and ask natural language questions about their data.
 
 ## Features
 
-- Upload multiple CSV files
+- Upload multiple CSV (`.csv`) and Excel (`.xlsx`, `.xls`) files
+- Preview data from the first worksheet in each Excel workbook
 - Switch between uploaded files
 - Interactive chat interface
 - AI-powered Q&A
 - Chat history support
-- CSV preview
+- Data preview
 - Column inspection
 - Error handling
 
